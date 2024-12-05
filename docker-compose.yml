@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  seller-service:
+    build:
+      context: ./seller
+      dockerfile: Dockerfile
+    container_name: seller-service
+    ports:
+      - "8711:8711" # Map container port to host
+    environment:
+      - ENV_FILE=/app/.env
+    volumes:
+      - /var/www/env_prod/.env:/app/.env
