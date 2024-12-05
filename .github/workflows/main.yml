@@ -30,10 +30,10 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: ./{{ matrix.service }}
-          file: ./{{ matrix.service }}/Dockerfile
+          context: ./${{ matrix.service }}
+          file: ./${{ matrix.service }}/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/{{ matrix.service }}-service:v1.0
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}-service:v1.0
 
   deploy:
     environment: staging
