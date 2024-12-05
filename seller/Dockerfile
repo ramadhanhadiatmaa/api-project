@@ -7,14 +7,14 @@ COPY . .
 
 RUN go mod download
 
-RUN CGO_ENABLED=0 go build -o seller
+RUN CGO_ENABLED=0 go build -o seller-service
 
 FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=build /app/seller .
+COPY --from=build /app/seller-service .
 
 EXPOSE 8711
 
-CMD [ "./master" ]
+CMD [ "./seller-service" ]
