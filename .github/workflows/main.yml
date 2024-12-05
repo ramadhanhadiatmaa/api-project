@@ -54,7 +54,7 @@ jobs:
             sudo docker-compose -f /path/to/docker-compose.yml down || true
             
             # Pull the latest Docker images
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/seller-service:v1.0
+            sudo docker pull cumisaosmentega/seller-service:v1.0
             # sudo docker pull ${{ secrets.DOCKER_USERNAME }}/order-service:v1.0
 
             # Start services using docker-compose
