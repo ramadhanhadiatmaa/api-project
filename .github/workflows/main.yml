@@ -51,11 +51,11 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             # Stop and remove existing containers
-            sudo docker-compose -f /path/to/docker-compose.yml down || true
+            sudo docker-compose -f /var/www/project/docker-compose.yml down || true
             
             # Pull the latest Docker images
-            sudo docker pull cumisaosmentega/seller-service:v1.0
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/seller-service:v1.0
             # sudo docker pull ${{ secrets.DOCKER_USERNAME }}/order-service:v1.0
 
             # Start services using docker-compose
-            sudo docker-compose -f /path/to/docker-compose.yml up -d
+            sudo docker-compose -f /var/www/project/docker-compose.yml up -d
