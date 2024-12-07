@@ -9,9 +9,8 @@ import (
 
 func Route(app *fiber.App) {
 	api := app.Group("/api", middlewares.Auth)
-	ap := app.Group("/apip")
 
-	login := ap.Group("/login")
+	login := api.Group("/login")
 	user := api.Group("/user")
 
 	login.Post("/", controllers.Login)
