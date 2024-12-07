@@ -20,30 +20,23 @@ func ShowUs(c *fiber.Ctx) error {
 }
 
 func IndexUs(c *fiber.Ctx) error {
-	id := c.Params("username")
+	username := c.Params("username")
 	var user models.User
 
-	// Menggunakan Preload untuk memuat data relasi Type
-	if err := models.DB.Preload("Type").First(&user, "username = ?", id).Error; err != nil {
+	// Preload TypeInfo untuk memuat data dari tabel type_user
+	if err := models.DB.Preload("TypeInfo").First(&user, "username = ?", username).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"message": "No data found",
+				"error": "No data found",
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to load data",
 			"error":   err.Error(),
+			"message": "Failed to load data",
 		})
 	}
 
-	// Format data response sesuai kebutuhan
-	response := map[string]interface{}{
-		"username": user.Username,
-		"password": user.Password,
-		"type":     user.TypeInfo,
-	}
-
-	return c.JSON(response)
+	return c.JSON(user)
 }
 
 func CreateUs(c *fiber.Ctx) error {
