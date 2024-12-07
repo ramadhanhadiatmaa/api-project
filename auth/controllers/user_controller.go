@@ -36,7 +36,14 @@ func IndexUs(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(user)
+	// Format data sesuai yang diinginkan
+	response := map[string]interface{}{
+		"username": user.Username,
+		"password": user.Password,
+		"type":     user.TypeInfo.Type, // Mengambil type dari TypeInfo
+	}
+
+	return c.JSON(response)
 }
 
 func CreateUs(c *fiber.Ctx) error {
@@ -54,39 +61,43 @@ func CreateUs(c *fiber.Ctx) error {
 }
 
 func UpdateUs(c *fiber.Ctx) error {
-	id := c.Params("username")
+	username := c.Params("username") // Ambil parameter username dari URL
+	var user models.User
+
+	// Cari data user berdasarkan username
+	if err := models.DB.First(&user, "username = ?", username).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return jsonResponse(c, fiber.StatusNotFound, "User not found", nil)
+		}
+		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to load user", err.Error())
+	}
+
+	// Parse body request ke struct user
+	if err := c.BodyParser(&user); err != nil {
+		return jsonResponse(c, fiber.StatusBadRequest, "Invalid input data", nil)
+	}
+
+	// Jika data valid, lakukan update
+	if err := models.DB.Save(&user).Error; err != nil {
+		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to update user", err.Error())
+	}
+
+	return jsonResponse(c, fiber.StatusOK, "User updated successfully", user)
+}
+
+func DeleteUs(c *fiber.Ctx) error {
+	username := c.Params("username")
 
 	var user models.User
-	if err := models.DB.First(&user, id).Error; err != nil {
+	if err := models.DB.First(&user, "username = ?", username).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return jsonResponse(c, fiber.StatusNotFound, "No data found", nil)
+			return jsonResponse(c, fiber.StatusNotFound, "Data not found", nil)
 		}
 		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to load data", err.Error())
 	}
 
-	var update models.User
-	if err := c.BodyParser(&update); err != nil {
-		return jsonResponse(c, fiber.StatusBadRequest, "Invalid input", err.Error())
-	}
-
-	if update.Username != id {
-		if err := models.DB.First(&models.User{}, update.Username).Error; err == nil {
-			return jsonResponse(c, fiber.StatusBadRequest, "The updated ID is already in use", nil)
-		}
-	}
-
-	if err := models.DB.Model(&user).Updates(update).Error; err != nil {
-		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to update data", err.Error())
-	}
-
-	return jsonResponse(c, fiber.StatusOK, "Data successfully updated", nil)
-}
-
-func DeleteUs(c *fiber.Ctx) error {
-	id := c.Params("username")
-
-	if models.DB.Delete(&models.User{}, id).RowsAffected == 0 {
-		return jsonResponse(c, fiber.StatusNotFound, "Data not found or already deleted", nil)
+	if err := models.DB.Delete(&user).Error; err != nil {
+		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to delete data", err.Error())
 	}
 
 	return jsonResponse(c, fiber.StatusOK, "Successfully deleted data", nil)
