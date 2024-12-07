@@ -32,7 +32,7 @@ func ConnectDatabase() {
 	}
 
 	// Perform database migration
-	if err := db.AutoMigrate(&User{}); err != nil {
+	if err := db.AutoMigrate(&User{}, &TypeUser{}); err != nil {
 		log.Fatalf("Failed to migrate the database: %v", err)
 	}
 
