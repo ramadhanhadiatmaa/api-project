@@ -12,8 +12,7 @@ jobs:
     strategy:
       matrix:
         service:
-          - seller
-          - auth
+          - customer
 
     steps:
       # Checkout code
@@ -55,8 +54,11 @@ jobs:
             sudo docker-compose -f /var/www/project/docker-compose.yml down || true
             
             # Pull the latest Docker images
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/seller-service:v1.0
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/auth-service:v1.0
+            # sudo docker pull ${{ secrets.DOCKER_USERNAME }}/seller-service:v1.0
+            # sudo docker pull ${{ secrets.DOCKER_USERNAME }}/auth-service:v1.0
+            # sudo docker pull ${{ secrets.DOCKER_USERNAME }}/product-service:v1.0
+
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/customer-service:v1.0
 
             # Start services using docker-compose
             sudo docker-compose -f /var/www/project/docker-compose.yml up -d
