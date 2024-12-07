@@ -10,12 +10,10 @@ import (
 func ShowUs(c *fiber.Ctx) error {
 	var user []models.User
 
-	if err := models.DB.Find(&user).Error; err != nil {
-		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to load data", err.Error())
-	}
-
-	if len(user) == 0 {
-		return jsonResponse(c, fiber.StatusNotFound, "No data found", nil)
+	if err := models.DB.Preload("TypeInfo").Find(&user).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch users",
+		})
 	}
 
 	return c.JSON(user)
