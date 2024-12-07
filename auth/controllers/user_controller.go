@@ -66,7 +66,7 @@ func Login(c *fiber.Ctx) error {
 	claims := jwt.MapClaims{
 		"username": user.Username,
 		"type":     user.Type,
-		"exp":      time.Now().Add(time.Hour * 72).Unix(),
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
@@ -76,11 +76,8 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"token": t,
-		"user": fiber.Map{
-			"username": user.Username,
-			"type":     user.Type,
-		},
+		"token":    t,
+		"username": user.Username,
 	})
 }
 
