@@ -7,8 +7,9 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"golang.org/x/crypto/bcrypt"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func Register(c *fiber.Ctx) error {
@@ -83,6 +84,52 @@ func Login(c *fiber.Ctx) error {
 	})
 }
 
+func Update(c *fiber.Ctx) error {
+	username := c.Params("username")
+	var user models.User
+
+	if err := models.DB.First(&user, "username = ?", username).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return jsonResponse(c, fiber.StatusNotFound, "User not found", nil)
+		}
+		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to load user", err.Error())
+	}
+
+	if err := c.BodyParser(&user); err != nil {
+		return jsonResponse(c, fiber.StatusBadRequest, "Invalid input data", nil)
+	}
+
+	if err := models.DB.Save(&user).Error; err != nil {
+		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to update user", err.Error())
+	}
+
+	return jsonResponse(c, fiber.StatusOK, "User updated successfully", user)
+}
+
+func DeleteUs(c *fiber.Ctx) error {
+	username := c.Params("username")
+
+	var user models.User
+	if err := models.DB.First(&user, "username = ?", username).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return jsonResponse(c, fiber.StatusNotFound, "Data not found", nil)
+		}
+		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to load data", err.Error())
+	}
+
+	if err := models.DB.Delete(&user).Error; err != nil {
+		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to delete data", err.Error())
+	}
+
+	return jsonResponse(c, fiber.StatusOK, "Successfully deleted data", nil)
+}
+
+func jsonResponse(c *fiber.Ctx, status int, message string, data interface{}) error {
+	return c.Status(status).JSON(fiber.Map{
+		"message": message,
+		"data":    data,
+	})
+}
 
 /* func ShowUs(c *fiber.Ctx) error {
 	var user []models.User
@@ -137,52 +184,4 @@ func CreateUs(c *fiber.Ctx) error {
 	return jsonResponse(c, fiber.StatusCreated, "Data successfully added", user)
 }
 
-func UpdateUs(c *fiber.Ctx) error {
-	username := c.Params("username") // Ambil parameter username dari URL
-	var user models.User
-
-	// Cari data user berdasarkan username
-	if err := models.DB.First(&user, "username = ?", username).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return jsonResponse(c, fiber.StatusNotFound, "User not found", nil)
-		}
-		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to load user", err.Error())
-	}
-
-	// Parse body request ke struct user
-	if err := c.BodyParser(&user); err != nil {
-		return jsonResponse(c, fiber.StatusBadRequest, "Invalid input data", nil)
-	}
-
-	// Jika data valid, lakukan update
-	if err := models.DB.Save(&user).Error; err != nil {
-		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to update user", err.Error())
-	}
-
-	return jsonResponse(c, fiber.StatusOK, "User updated successfully", user)
-}
-
-func DeleteUs(c *fiber.Ctx) error {
-	username := c.Params("username")
-
-	var user models.User
-	if err := models.DB.First(&user, "username = ?", username).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return jsonResponse(c, fiber.StatusNotFound, "Data not found", nil)
-		}
-		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to load data", err.Error())
-	}
-
-	if err := models.DB.Delete(&user).Error; err != nil {
-		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to delete data", err.Error())
-	}
-
-	return jsonResponse(c, fiber.StatusOK, "Successfully deleted data", nil)
-}
-
-func jsonResponse(c *fiber.Ctx, status int, message string, data interface{}) error {
-	return c.Status(status).JSON(fiber.Map{
-		"message": message,
-		"data":    data,
-	})
-} */
+*/
