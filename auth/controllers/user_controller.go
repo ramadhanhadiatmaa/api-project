@@ -106,7 +106,7 @@ func Update(c *fiber.Ctx) error {
 	return jsonResponse(c, fiber.StatusOK, "User updated successfully", user)
 }
 
-func DeleteUs(c *fiber.Ctx) error {
+func Delete(c *fiber.Ctx) error {
 	username := c.Params("username")
 
 	var user models.User
