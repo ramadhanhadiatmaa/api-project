@@ -2,12 +2,89 @@ package controllers
 
 import (
 	"auth/models"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
+	"golang.org/x/crypto/bcrypt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-func ShowUs(c *fiber.Ctx) error {
+func Register(c *fiber.Ctx) error {
+	var data map[string]string
+	if err := c.BodyParser(&data); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
+	}
+
+	userType, err := strconv.Atoi(data["type"])
+	if err != nil || (userType != 1 && userType != 2) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid user type"})
+	}
+
+	var existingUser models.User
+	if err := models.DB.First(&existingUser, "username = ?", data["username"]).Error; err == nil {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "Username already exists"})
+	}
+
+	password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
+
+	user := models.User{
+		Username: data["username"],
+		Password: string(password),
+		Type:     userType,
+	}
+
+	if err := models.DB.Create(&user).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not register user"})
+	}
+
+	return c.JSON(fiber.Map{"message": "User registered successfully"})
+}
+
+func Login(c *fiber.Ctx) error {
+	var data map[string]string
+	if err := c.BodyParser(&data); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
+	}
+
+	var user models.User
+	if err := models.DB.First(&user, "username = ?", data["username"]).Error; err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid username or password"})
+	}
+
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(data["password"])) != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid username or password"})
+	}
+
+	secretKey := os.Getenv("SECRET_KEY")
+	if secretKey == "" {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Secret key not configured"})
+	}
+
+	claims := jwt.MapClaims{
+		"username": user.Username,
+		"type":     user.Type,
+		"exp":      time.Now().Add(time.Hour * 72).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	t, err := token.SignedString([]byte(secretKey))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not generate token"})
+	}
+
+	return c.JSON(fiber.Map{
+		"token": t,
+		"user": fiber.Map{
+			"username": user.Username,
+			"type":     user.Type,
+		},
+	})
+}
+
+
+/* func ShowUs(c *fiber.Ctx) error {
 	var user []models.User
 
 	if err := models.DB.Preload("TypeInfo").Find(&user).Error; err != nil {
@@ -108,4 +185,4 @@ func jsonResponse(c *fiber.Ctx, status int, message string, data interface{}) er
 		"message": message,
 		"data":    data,
 	})
-}
+} */

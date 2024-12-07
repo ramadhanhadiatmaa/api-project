@@ -2,22 +2,21 @@ package routes
 
 import (
 	"auth/controllers"
-	"auth/middlewares"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func Route(app *fiber.App) {
-	api := app.Group("/api", middlewares.Auth)
+	api := app.Group("/api")
 
-	login := api.Group("/login")
 	user := api.Group("/user")
 
-	login.Post("/", controllers.Login)
+	user.Post("/login", controllers.Login)
+	user.Post("/register", controllers.Register)
 
-	user.Get("/", controllers.ShowUs)
-	user.Get("/:username", controllers.IndexUs)
-	user.Post("/", controllers.CreateUs)
-	user.Put("/:username", controllers.UpdateUs)
-	user.Delete("/:username", controllers.DeleteUs)
+	/* user.Get("/", controllers.ShowUs) */
+	/* user.Get("/:username", controllers.IndexUs) */
+
+	/* user.Put("/:username", controllers.UpdateUs)
+	user.Delete("/:username", controllers.DeleteUs) */
 }
