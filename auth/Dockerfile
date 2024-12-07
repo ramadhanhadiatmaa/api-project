@@ -7,14 +7,14 @@ COPY . .
 
 RUN go mod download
 
-RUN CGO_ENABLED=0 go build -o seller-service
+RUN CGO_ENABLED=0 go build -o auth-service
 
 FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=build /app/seller-service .
+COPY --from=build /app/auth-service .
 
-EXPOSE 8711
+EXPOSE 8712
 
-CMD [ "./seller-service" ]
+CMD [ "./auth-service" ]

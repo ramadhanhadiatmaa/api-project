@@ -1,8 +1,8 @@
 package models
 
 type Seller struct {
-	Id int    `gorm:"type:int(11);primaryKey;autoIncrement" json:"kd_kel"`
-	NmKel string `gorm:"type:varchar(60)" json:"nm_kel"`
+	IdType int    `gorm:"type:int(11);primaryKey;autoIncrement" json:"id_type"`
+	Type   string `gorm:"type:varchar(60)" json:"type"`
 }
 
 func (Seller) TableName() string {

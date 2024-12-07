@@ -12,8 +12,8 @@ func Route(app *fiber.App) {
 
 	type_user := api.Group("/type")
 	type_user.Get("/", controllers.ShowTy)          
-	type_user.Get("/:id", controllers.IndexTy)      
+	type_user.Get("/:id_type", controllers.IndexTy)      
 	type_user.Post("/", controllers.CreateTy)       
-	type_user.Put("/:id", controllers.UpdateTy)     
-	type_user.Delete("/:id", controllers.DeleteTy)  
+	type_user.Put("/:id_type", controllers.UpdateTy)     
+	type_user.Delete("/:id_type", controllers.DeleteTy)  
 }
