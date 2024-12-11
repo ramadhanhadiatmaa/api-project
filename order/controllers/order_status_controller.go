@@ -23,10 +23,10 @@ func ShowStatus(c *fiber.Ctx) error {
 }
 
 func IndexStatus(c *fiber.Ctx) error {
-	id := c.Params("id_status")
+	id := c.Params("id")
 	var order models.OrderStatus
 
-	if err := models.DB.First(&order, "id_status = ?", id).Error; err != nil {
+	if err := models.DB.First(&order, "id = ?", id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return jsonResponse(c, fiber.StatusNotFound, "No data found", nil)
 		}
@@ -51,7 +51,7 @@ func CreateStatus(c *fiber.Ctx) error {
 }
 
 func UpdateStatus(c *fiber.Ctx) error {
-	id, err := strconv.Atoi(c.Params("id_status"))
+	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return jsonResponse(c, fiber.StatusBadRequest, "Invalid ID format", nil)
 	}
@@ -83,7 +83,7 @@ func UpdateStatus(c *fiber.Ctx) error {
 }
 
 func DeleteStatus(c *fiber.Ctx) error {
-	id := c.Params("id_status")
+	id := c.Params("id")
 
 	if models.DB.Delete(&models.OrderStatus{}, id).RowsAffected == 0 {
 		return jsonResponse(c, fiber.StatusNotFound, "Data not found or already deleted", nil)

@@ -13,7 +13,6 @@ jobs:
       matrix:
         service:
           - order
-          - product
 
     steps:
       # Checkout code

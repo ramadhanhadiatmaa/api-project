@@ -12,8 +12,8 @@ func Route(app *fiber.App) {
 
 	status := api.Group("/status")
 	status.Get("/", controllers.ShowStatus)
-	status.Get("/:id_status", controllers.IndexStatus)
+	status.Get("/:id", controllers.IndexStatus)
 	status.Post("/", controllers.CreateStatus)
-	status.Put("/:id_status", controllers.UpdateStatus)
-	status.Delete("/:id_status", controllers.DeleteStatus)
+	status.Put("/:id", controllers.UpdateStatus)
+	status.Delete("/:id", controllers.DeleteStatus)
 }
