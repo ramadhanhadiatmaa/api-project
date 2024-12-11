@@ -20,7 +20,7 @@ func Register(c *fiber.Ctx) error {
 
 	typeUser, err := strconv.Atoi(data["type"])
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid location"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid Type User"})
 	}
 
 	var existingUser models.User
@@ -84,6 +84,13 @@ func Login(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"token":    t,
 		"username": user.Username,
+		"email":    user.Email,
+		"image":    user.Image,
+		"desc":     user.Desc,
+		"hp":       user.Hp,
+		"address":  user.Address,
+		"loc":      user.Loc,
+		"type":     user.TypeInfo.Type,
 	})
 }
 
