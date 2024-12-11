@@ -18,9 +18,9 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
 	}
 
-	userType, err := strconv.Atoi(data["type"])
-	if err != nil || (userType != 1 && userType != 2) {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid user type"})
+	typeUser, err := strconv.Atoi(data["type"])
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid location"})
 	}
 
 	var existingUser models.User
@@ -33,7 +33,13 @@ func Register(c *fiber.Ctx) error {
 	user := models.User{
 		Username: data["username"],
 		Password: string(password),
-		Type:     userType,
+		Email:    data["email"],
+		Type:     typeUser,
+		Image:    data["image"],
+		Desc:     data["desc"],
+		Hp:       data["hp"],
+		Address:  data["address"],
+		Loc:      data["loc"],
 	}
 
 	if err := models.DB.Create(&user).Error; err != nil {
@@ -127,58 +133,3 @@ func jsonResponse(c *fiber.Ctx, status int, message string, data interface{}) er
 		"data":    data,
 	})
 }
-
-/* func ShowUs(c *fiber.Ctx) error {
-	var user []models.User
-
-	if err := models.DB.Preload("TypeInfo").Find(&user).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to fetch users",
-		})
-	}
-
-	return c.JSON(user)
-}
-
-func IndexUs(c *fiber.Ctx) error {
-	username := c.Params("username")
-	var user models.User
-
-	// Preload TypeInfo untuk memuat data dari tabel type_user
-	if err := models.DB.Preload("TypeInfo").First(&user, "username = ?", username).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "No data found",
-			})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   err.Error(),
-			"message": "Failed to load data",
-		})
-	}
-
-	// Format data sesuai yang diinginkan
-	response := map[string]interface{}{
-		"username": user.Username,
-		"password": user.Password,
-		"type":     user.TypeInfo.Type, // Mengambil type dari TypeInfo
-	}
-
-	return c.JSON(response)
-}
-
-func CreateUs(c *fiber.Ctx) error {
-	var user models.User
-
-	if err := c.BodyParser(&user); err != nil {
-		return jsonResponse(c, fiber.StatusBadRequest, "Invalid input", err.Error())
-	}
-
-	if err := models.DB.Create(&user).Error; err != nil {
-		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to save data", err.Error())
-	}
-
-	return jsonResponse(c, fiber.StatusCreated, "Data successfully added", user)
-}
-
-*/

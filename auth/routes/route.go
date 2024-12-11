@@ -15,9 +15,4 @@ func Route(app *fiber.App) {
 	user.Post("/register", controllers.Register)
 	user.Put("/:username", controllers.Update)
 	user.Delete("/:username", controllers.Delete)
-
-	/* user.Get("/", controllers.ShowUs) */
-	/* user.Get("/:username", controllers.IndexUs) */
-
-	
 }
