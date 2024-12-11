@@ -1,26 +1,28 @@
 package middlewares
 
 import (
-	"log"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
+	"github.com/golang-jwt/jwt"
 )
 
-func Auth(ctx *fiber.Ctx) error{
- if err := godotenv.Load(); err != nil {
-	log.Fatalf("Error loading .env file %v", err)
- }
+func Auth(c *fiber.Ctx) error {
+	tokenString := c.Get("Authorization")
+	if tokenString == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Missing token"})
+	}
 
- secret_key := os.Getenv("SECRET_KEY")
+	secretKey := os.Getenv("SECRET_KEY")
+	if secretKey == "" {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Secret key not configured"})
+	}
 
- header := ctx.Get("apikey")
-
- if header == "" || header != secret_key {
-	return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-		"message": "Unauthorized Access Request",
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secretKey), nil
 	})
- }
- return ctx.Next()
+	if err != nil || !token.Valid {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token"})
+	}
+	return c.Next()
 }

@@ -2,69 +2,102 @@ package controllers
 
 import (
 	"auth/models"
+	"os"
+	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-func ShowUs(c *fiber.Ctx) error {
-	var user []models.User
-
-	if err := models.DB.Preload("TypeInfo").Find(&user).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to fetch users",
-		})
+func Register(c *fiber.Ctx) error {
+	var data map[string]string
+	if err := c.BodyParser(&data); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
 	}
 
-	return c.JSON(user)
-}
-
-func IndexUs(c *fiber.Ctx) error {
-	username := c.Params("username")
-	var user models.User
-
-	// Preload TypeInfo untuk memuat data dari tabel type_user
-	if err := models.DB.Preload("TypeInfo").First(&user, "username = ?", username).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "No data found",
-			})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   err.Error(),
-			"message": "Failed to load data",
-		})
+	typeUser, err := strconv.Atoi(data["type"])
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid Type User"})
 	}
 
-	// Format data sesuai yang diinginkan
-	response := map[string]interface{}{
-		"username": user.Username,
-		"password": user.Password,
-		"type":     user.TypeInfo.Type, // Mengambil type dari TypeInfo
+	var existingUser models.User
+	if err := models.DB.First(&existingUser, "username = ?", data["username"]).Error; err == nil {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "Username already exists"})
 	}
 
-	return c.JSON(response)
-}
+	password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
 
-func CreateUs(c *fiber.Ctx) error {
-	var user models.User
-
-	if err := c.BodyParser(&user); err != nil {
-		return jsonResponse(c, fiber.StatusBadRequest, "Invalid input", err.Error())
+	user := models.User{
+		Username: data["username"],
+		Password: string(password),
+		Email:    data["email"],
+		Type:     typeUser,
+		Image:    data["image"],
+		Desc:     data["desc"],
+		Hp:       data["hp"],
+		Address:  data["address"],
+		Loc:      data["loc"],
 	}
 
 	if err := models.DB.Create(&user).Error; err != nil {
-		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to save data", err.Error())
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not register user"})
 	}
 
-	return jsonResponse(c, fiber.StatusCreated, "Data successfully added", user)
+	return c.JSON(fiber.Map{"message": "User registered successfully"})
 }
 
-func UpdateUs(c *fiber.Ctx) error {
-	username := c.Params("username") // Ambil parameter username dari URL
+func Login(c *fiber.Ctx) error {
+	var data map[string]string
+	if err := c.BodyParser(&data); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
+	}
+
+	var user models.User
+	if err := models.DB.Preload("LocInfo").Preload("TypeInfo").First(&user, "username = ?", data["username"]).Error; err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid username or password"})
+	}
+
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(data["password"])) != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid username or password"})
+	}
+
+	secretKey := os.Getenv("SECRET_KEY")
+	if secretKey == "" {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Secret key not configured"})
+	}
+
+	claims := jwt.MapClaims{
+		"username": user.Username,
+		"type":     user.Type,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	t, err := token.SignedString([]byte(secretKey))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not generate token"})
+	}
+
+	return c.JSON(fiber.Map{
+		"token":    t,
+		"username": user.Username,
+		"email":    user.Email,
+		"image":    user.Image,
+		"desc":     user.Desc,
+		"hp":       user.Hp,
+		"address":  user.Address,
+		"loc":      user.LocInfo.Image,
+		"type":     user.TypeInfo.Type,
+	})
+}
+
+func Update(c *fiber.Ctx) error {
+	username := c.Params("username")
 	var user models.User
 
-	// Cari data user berdasarkan username
 	if err := models.DB.First(&user, "username = ?", username).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return jsonResponse(c, fiber.StatusNotFound, "User not found", nil)
@@ -72,12 +105,10 @@ func UpdateUs(c *fiber.Ctx) error {
 		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to load user", err.Error())
 	}
 
-	// Parse body request ke struct user
 	if err := c.BodyParser(&user); err != nil {
 		return jsonResponse(c, fiber.StatusBadRequest, "Invalid input data", nil)
 	}
 
-	// Jika data valid, lakukan update
 	if err := models.DB.Save(&user).Error; err != nil {
 		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to update user", err.Error())
 	}
@@ -85,7 +116,7 @@ func UpdateUs(c *fiber.Ctx) error {
 	return jsonResponse(c, fiber.StatusOK, "User updated successfully", user)
 }
 
-func DeleteUs(c *fiber.Ctx) error {
+func Delete(c *fiber.Ctx) error {
 	username := c.Params("username")
 
 	var user models.User
