@@ -56,7 +56,7 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	var user models.User
-	if err := models.DB.Preload("TypeInfo").First(&user, "username = ?", data["username"]).Error; err != nil {
+	if err := models.DB.Preload("LocInfo").Preload("TypeInfo").First(&user, "username = ?", data["username"]).Error; err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid username or password"})
 	}
 
@@ -89,7 +89,7 @@ func Login(c *fiber.Ctx) error {
 		"desc":     user.Desc,
 		"hp":       user.Hp,
 		"address":  user.Address,
-		"loc":      user.Loc,
+		"loc":      user.LocInfo.Image,
 		"type":     user.TypeInfo.Type,
 	})
 }
