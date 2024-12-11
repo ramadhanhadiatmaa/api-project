@@ -56,7 +56,7 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	var user models.User
-	if err := models.DB.First(&user, "username = ?", data["username"]).Error; err != nil {
+	if err := models.DB.Preload("TypeInfo").First(&user, "username = ?", data["username"]).Error; err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid username or password"})
 	}
 
