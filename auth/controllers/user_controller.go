@@ -30,12 +30,14 @@ func Register(c *fiber.Ctx) error {
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
 
+	image := os.Getenv("IMAGE")
+
 	user := models.User{
 		Username: data["username"],
 		Password: string(password),
 		Email:    data["email"],
 		Type:     typeUser,
-		Image:    os.Getenv("IMAGE"),
+		Image:    image,
 		Desc:     data["desc"],
 		Hp:       data["hp"],
 		Address:  data["address"],
