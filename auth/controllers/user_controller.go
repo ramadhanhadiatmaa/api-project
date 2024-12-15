@@ -38,10 +38,7 @@ func Register(c *fiber.Ctx) error {
 		Email:    data["email"],
 		Type:     typeUser,
 		Image:    image,
-		Desc:     data["desc"],
 		Hp:       data["hp"],
-		Address:  data["address"],
-		Loc:      data["loc"],
 		CreatedAt: time.Now(),
 	}
 
@@ -75,7 +72,7 @@ func Login(c *fiber.Ctx) error {
 	claims := jwt.MapClaims{
 		"username": user.Username,
 		"type":     user.Type,
-		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+		"exp":      time.Now().Add(time.Hour * 240).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
@@ -91,8 +88,6 @@ func Login(c *fiber.Ctx) error {
 		"image":    user.Image,
 		"desc":     user.Desc,
 		"hp":       user.Hp,
-		"address":  user.Address,
-		"loc":      user.LocInfo.Image,
 		"type":     user.TypeInfo.Type,
 	})
 }

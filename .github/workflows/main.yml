@@ -12,7 +12,8 @@ jobs:
     strategy:
       matrix:
         service:
-          - product
+          - master
+          - auth
 
     steps:
       # Checkout code
@@ -56,6 +57,7 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/auth-service:v1.0
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/product-service:v1.0
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/order-service:v1.0
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/master-service:v1.0
 
             # Start services using docker-compose
             sudo docker-compose -f /var/www/project/docker-compose.yml up -d
