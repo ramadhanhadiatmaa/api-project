@@ -11,7 +11,7 @@ import (
 func ShowAdd(c *fiber.Ctx) error {
 	var data []models.Loc
 
-	if err := models.DB.Preload("Loc").Find(&data).Error; err != nil {
+	if err := models.DB.Preload("Loc").Preload("User").Find(&data).Error; err != nil {
 		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to load data", err.Error())
 	}
 
@@ -26,7 +26,7 @@ func IndexAdd(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var data models.Loc
 
-	if err := models.DB.Preload("Loc").First(&data, "id = ?", id).Error; err != nil {
+	if err := models.DB.Preload("Loc").Preload("Loc").First(&data, "id = ?", id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return jsonResponse(c, fiber.StatusNotFound, "No data found", nil)
 		}
