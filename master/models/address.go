@@ -8,9 +8,9 @@ type Address struct {
 	State    string `gorm:"type:varchar(60);not null" json:"state"`
 	Zipcode  string `gorm:"type:varchar(30);not null" json:"zipcode"`
 	Username string `gorm:"type:varchar(100);not null" json:"username"`
-	/* Loc      string `gorm:"type:varchar(20);null" json:"loc"` */
-	User User `gorm:"foreignKey:Username;references:Username" json:"user"`
-	/* LocInfo  Loc    `gorm:"foreignKey:Loc;references:IdLoc" json:"loc_info"` */
+	Loc      string `gorm:"type:varchar(20);null" json:"loc"`
+	User     User   `gorm:"foreignKey:Username;references:Username" json:"user"`
+	LocInfo  Loc    `gorm:"foreignKey:Loc;references:ID" json:"loc_info"`
 }
 
 func (Address) TableName() string {

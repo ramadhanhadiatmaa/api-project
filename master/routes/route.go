@@ -23,4 +23,11 @@ func Route(app *fiber.App) {
 	loc.Post("/", controllers.CreateLoc)
 	loc.Put("/:id", controllers.UpdateLoc)
 	loc.Delete("/:id", controllers.DeleteLoc)
+
+	add := api.Group("/add")
+	add.Get("/", controllers.ShowAdd)
+	add.Get("/:id", controllers.IndexAdd)
+	add.Post("/", controllers.CreateAdd)
+	add.Put("/:id", controllers.UpdateAdd)
+	add.Delete("/:id", controllers.DeleteAdd)
 }
