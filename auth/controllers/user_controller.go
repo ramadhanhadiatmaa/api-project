@@ -3,7 +3,7 @@ package controllers
 import (
 	"auth/models"
 	"os"
-	/* "strconv" */
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,10 +18,10 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
 	}
 
-	/* typeUser, err := strconv.Atoi(data["type"])
+	typeUser, err := strconv.Atoi(data["type"])
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid Type User"})
-	} */
+	}
 
 	var existingUser models.User
 	if err := models.DB.First(&existingUser, "username = ?", data["username"]).Error; err == nil {
@@ -36,7 +36,7 @@ func Register(c *fiber.Ctx) error {
 		Username: data["username"],
 		Password: string(password),
 		Email:    data["email"],
-		/* Type:     typeUser, */
+		Type:     typeUser,
 		Image:    image,
 		Hp:       data["hp"],
 		CreatedAt: time.Now(),
@@ -71,7 +71,7 @@ func Login(c *fiber.Ctx) error {
 
 	claims := jwt.MapClaims{
 		"username": user.Username,
-		/* "type":     user.Type, */
+		"type":     user.Type,
 		"exp":      time.Now().Add(time.Hour * 240).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -88,7 +88,7 @@ func Login(c *fiber.Ctx) error {
 		"image":    user.Image,
 		"desc":     user.Desc,
 		"hp":       user.Hp,
-		/* "type":     user.TypeInfo.Type, */
+		"type":     user.TypeInfo.Type,
 	})
 }
 

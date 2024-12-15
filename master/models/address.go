@@ -11,3 +11,7 @@ type Address struct {
 	User     User   `gorm:"foreignKey:Username;references:Username" json:"user"`
 	LocInfo  Loc    `gorm:"foreignKey:Loc;references:IdLoc" json:"loc_info"`
 }
+
+func (Address) TableName() string {
+	return "address"
+}

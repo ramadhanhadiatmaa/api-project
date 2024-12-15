@@ -9,8 +9,8 @@ type User struct {
 	Image     string    `gorm:"type:varchar(255);null" json:"image"`
 	Desc      string    `gorm:"type:varchar(255);null" json:"desc"`
 	Hp        string    `gorm:"type:varchar(20);null" json:"hp"`
-	/* Type      int       `gorm:"type:int(11)" json:"type"`
-	TypeInfo  TypeUser  `gorm:"foreignKey:Type;references:ID" json:"type_info"` */
+	Type      int       `gorm:"type:int(11)" json:"type"`
+	TypeInfo  TypeUser  `gorm:"foreignKey:Type;references:ID" json:"type_info"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
