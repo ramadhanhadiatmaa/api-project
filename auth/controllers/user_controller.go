@@ -35,11 +35,12 @@ func Register(c *fiber.Ctx) error {
 		Password: string(password),
 		Email:    data["email"],
 		Type:     typeUser,
-		Image:    data["image"],
+		Image:    os.Getenv("IMAGE"),
 		Desc:     data["desc"],
 		Hp:       data["hp"],
 		Address:  data["address"],
 		Loc:      data["loc"],
+		CreatedAt: time.Now(),
 	}
 
 	if err := models.DB.Create(&user).Error; err != nil {

@@ -12,7 +12,8 @@ jobs:
     strategy:
       matrix:
         service:
-          - order
+          - product
+          - auth
 
     steps:
       # Checkout code
@@ -41,7 +42,6 @@ jobs:
     needs: build-and-push
 
     steps:
-      # Deploy to server via SSH
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
