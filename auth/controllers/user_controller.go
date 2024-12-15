@@ -33,12 +33,12 @@ func Register(c *fiber.Ctx) error {
 	image := os.Getenv("IMAGE")
 
 	user := models.User{
-		Username: data["username"],
-		Password: string(password),
-		Email:    data["email"],
-		Type:     typeUser,
-		Image:    image,
-		Hp:       data["hp"],
+		Username:  data["username"],
+		Password:  string(password),
+		Email:     data["email"],
+		Type:      typeUser,
+		Image:     image,
+		Hp:        data["hp"],
 		CreatedAt: time.Now(),
 	}
 
@@ -56,7 +56,7 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	var user models.User
-	if err := models.DB.Preload("LocInfo").Preload("TypeInfo").First(&user, "username = ?", data["username"]).Error; err != nil {
+	if err := models.DB.Preload("TypeInfo").First(&user, "username = ?", data["username"]).Error; err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid username or password"})
 	}
 
