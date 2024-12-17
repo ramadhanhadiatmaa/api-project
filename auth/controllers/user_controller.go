@@ -30,16 +30,16 @@ func Register(c *fiber.Ctx) error {
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
 
+	image := os.Getenv("IMAGE")
+
 	user := models.User{
-		Username: data["username"],
-		Password: string(password),
-		Email:    data["email"],
-		Type:     typeUser,
-		Image:    data["image"],
-		Desc:     data["desc"],
-		Hp:       data["hp"],
-		Address:  data["address"],
-		Loc:      data["loc"],
+		Username:  data["username"],
+		Password:  string(password),
+		Email:     data["email"],
+		Type:      typeUser,
+		Image:     image,
+		Hp:        data["hp"],
+		CreatedAt: time.Now(),
 	}
 
 	if err := models.DB.Create(&user).Error; err != nil {
@@ -50,13 +50,15 @@ func Register(c *fiber.Ctx) error {
 }
 
 func Login(c *fiber.Ctx) error {
+
 	var data map[string]string
+	
 	if err := c.BodyParser(&data); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
 	}
 
 	var user models.User
-	if err := models.DB.Preload("LocInfo").Preload("TypeInfo").First(&user, "username = ?", data["username"]).Error; err != nil {
+	if err := models.DB.Preload("TypeInfo").First(&user, "username = ?", data["username"]).Error; err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid username or password"})
 	}
 
@@ -72,7 +74,7 @@ func Login(c *fiber.Ctx) error {
 	claims := jwt.MapClaims{
 		"username": user.Username,
 		"type":     user.Type,
-		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+		"exp":      time.Now().Add(time.Hour * 240).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
@@ -88,8 +90,6 @@ func Login(c *fiber.Ctx) error {
 		"image":    user.Image,
 		"desc":     user.Desc,
 		"hp":       user.Hp,
-		"address":  user.Address,
-		"loc":      user.LocInfo.Image,
 		"type":     user.TypeInfo.Type,
 	})
 }
