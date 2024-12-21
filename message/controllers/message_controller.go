@@ -8,38 +8,32 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// CreateMessage handles creating a new message in a conversation.
 func CreateMessage(c *fiber.Ctx) error {
 	var data models.Message
 
-	// Parse the request body into the Message struct
 	if err := c.BodyParser(&data); err != nil {
 		return jsonResponse(c, fiber.StatusBadRequest, "Invalid input", err.Error())
 	}
 
-	// Check if the conversation already exists between the customer and seller
 	var conversation models.Conversation
 	err := models.DB.Where("cust_user = ? AND seller_user = ?", data.Sender, data.Receiver).First(&conversation).Error
 
 	if err != nil {
-		// If conversation does not exist, create a new conversation
+
 		conversation = models.Conversation{
 			CustUser:   data.Sender,
-			SellerUser: data.Receiver, // assuming Receiver is the seller
-			LastId:     0,             // No messages yet
+			SellerUser: data.Receiver,
+			LastId:     0,
 			CreatedAt:  time.Now(),
 		}
 
-		// Save the new conversation in the database
 		if err := models.DB.Create(&conversation).Error; err != nil {
 			return jsonResponse(c, fiber.StatusInternalServerError, "Failed to create conversation", err.Error())
 		}
 	}
 
-	// Update the conversation_id in the message
 	data.ConversationID = conversation.ID
 
-	// Ensure the sender is part of the conversation (either customer or seller)
 	if data.Sender != conversation.CustUser && data.Sender != conversation.SellerUser {
 		return jsonResponse(c, fiber.StatusForbidden, "Sender is not part of the conversation", nil)
 	}
