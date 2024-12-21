@@ -26,7 +26,7 @@ func CreateMessage(c *fiber.Ctx) error {
 		// Create a new conversation between sender and receiver
 		conversation = models.Conversation{
 			CustUser:   data.Sender,
-			SellerUser: conversation.SellerUser, // assuming Receiver is the seller
+			SellerUser: data.Receiver, // assuming Receiver is the seller
 			LastId:     0,             // No messages yet
 			CreatedAt:  time.Now(),
 		}
