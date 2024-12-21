@@ -17,13 +17,12 @@ func CreateMessage(c *fiber.Ctx) error {
 		return jsonResponse(c, fiber.StatusBadRequest, "Invalid input", err.Error())
 	}
 
-	// Validate if the ConversationID exists
+	// Check if the conversation already exists between the customer and seller
 	var conversation models.Conversation
-	err := models.DB.First(&conversation, data.ConversationID).Error
+	err := models.DB.Where("cust_user = ? AND seller_user = ?", data.Sender, data.Receiver).First(&conversation).Error
 
 	if err != nil {
 		// If conversation does not exist, create a new conversation
-		// Create a new conversation between sender and receiver
 		conversation = models.Conversation{
 			CustUser:   data.Sender,
 			SellerUser: data.Receiver, // assuming Receiver is the seller
@@ -35,9 +34,10 @@ func CreateMessage(c *fiber.Ctx) error {
 		if err := models.DB.Create(&conversation).Error; err != nil {
 			return jsonResponse(c, fiber.StatusInternalServerError, "Failed to create conversation", err.Error())
 		}
-		// Update conversation_id in message
-		data.ConversationID = conversation.ID
 	}
+
+	// Update the conversation_id in the message
+	data.ConversationID = conversation.ID
 
 	// Ensure the sender is part of the conversation (either customer or seller)
 	if data.Sender != conversation.CustUser && data.Sender != conversation.SellerUser {
