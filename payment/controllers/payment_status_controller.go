@@ -11,7 +11,7 @@ import (
 func ShowStatus(c *fiber.Ctx) error {
 	var data []models.StatusPayment
 
-	if err := models.DB.Preload("Loc").Preload("User").Find(&data).Error; err != nil {
+	if err := models.DB.Find(&data).Error; err != nil {
 		return jsonResponse(c, fiber.StatusInternalServerError, "Failed to load data", err.Error())
 	}
 

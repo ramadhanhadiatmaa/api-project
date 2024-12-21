@@ -10,7 +10,7 @@ import (
 func Route(app *fiber.App) {
 	api := app.Group("/api", middlewares.Auth)
 
-	status := api.Group("/statuspayment")
+	status := api.Group("/status-payment")
 	status.Get("/", controllers.ShowStatus)
 	status.Get("/:id", controllers.IndexStatus)
 	status.Post("/", controllers.CreateStatus)
