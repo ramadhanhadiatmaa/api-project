@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         service:
-          - payment
+          - auth
 
     steps:
       # Checkout code
