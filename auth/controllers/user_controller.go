@@ -82,13 +82,15 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"token":    t,
-		"username": user.Username,
-		"email":    user.Email,
-		"image":    user.Image,
-		"desc":     user.Desc,
-		"hp":       user.Hp,
-		"type":     user.TypeInfo.Type,
+		"token":      t,
+		"username":   user.Username,
+		"email":      user.Email,
+		"image":      user.Image,
+		"desc":       user.Desc,
+		"hp":         user.Hp,
+		"first_name": user.FirstName,
+		"last_name":  user.LastName,
+		"type":       user.TypeInfo.Type,
 	})
 }
 
