@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"auth/models"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -30,14 +31,13 @@ func Register(c *fiber.Ctx) error {
 
 	password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
 
-	image := os.Getenv("IMAGE")
-
 	user := models.User{
 		Username:  data["username"],
 		Password:  string(password),
 		Email:     data["email"],
+		FirstName: data["first_name"],
+		LastName:  data["last_name"],
 		Type:      typeUser,
-		Image:     image,
 		Hp:        data["hp"],
 		CreatedAt: time.Now(),
 	}
@@ -52,7 +52,7 @@ func Register(c *fiber.Ctx) error {
 func Login(c *fiber.Ctx) error {
 
 	var data map[string]string
-	
+
 	if err := c.BodyParser(&data); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
 	}
@@ -84,13 +84,15 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"token":    t,
-		"username": user.Username,
-		"email":    user.Email,
-		"image":    user.Image,
-		"desc":     user.Desc,
-		"hp":       user.Hp,
-		"type":     user.TypeInfo.Type,
+		"token":      t,
+		"username":   user.Username,
+		"email":      user.Email,
+		"image":      user.Image,
+		"desc":       user.Desc,
+		"hp":         user.Hp,
+		"first_name": user.FirstName,
+		"last_name":  user.LastName,
+		"type":       user.TypeInfo.Type,
 	})
 }
 
@@ -114,6 +116,55 @@ func Update(c *fiber.Ctx) error {
 	}
 
 	return jsonResponse(c, fiber.StatusOK, "User updated successfully", user)
+}
+
+func UploadImage(c *fiber.Ctx) error {
+	// Ambil username dari query atau body
+	username := c.FormValue("username")
+	if username == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Username is required",
+		})
+	}
+
+	// Ambil file gambar
+	file, err := c.FormFile("image")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Failed to upload image",
+		})
+	}
+
+	// Simpan file ke folder "uploads"
+	uploadPath := fmt.Sprintf("var/www/html/images/%s", file.Filename)
+	if err := c.SaveFile(file, uploadPath); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to save image",
+		})
+	}
+
+	// Cari user di database
+	var user models.User
+	if err := models.DB.First(&user, "username = ?", username).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	// Update kolom image di database
+	user.Image = uploadPath
+	if err := models.DB.Save(&user).Error; err != nil {
+		// Hapus file jika database gagal update
+		os.Remove(uploadPath)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update user image",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Image uploaded successfully",
+		"user":    user,
+	})
 }
 
 func Delete(c *fiber.Ctx) error {
