@@ -35,6 +35,8 @@ func Register(c *fiber.Ctx) error {
 		Username:  data["username"],
 		Password:  string(password),
 		Email:     data["email"],
+		FirstName: data["first_name"],
+		LastName:  data["last_name"],
 		Type:      typeUser,
 		Hp:        data["hp"],
 		CreatedAt: time.Now(),
