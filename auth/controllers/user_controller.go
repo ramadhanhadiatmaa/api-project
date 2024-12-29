@@ -40,6 +40,7 @@ func Register(c *fiber.Ctx) error {
 		Email:     data["email"],
 		FirstName: data["first_name"],
 		LastName:  data["last_name"],
+		ImagePath: "http://116.193.191.231/images/noimage.png",
 		Type:      typeUser,
 		Hp:        data["hp"],
 		CreatedAt: time.Now(),
