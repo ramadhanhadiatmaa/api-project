@@ -3,7 +3,10 @@ package controllers
 import (
 	"auth/models"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -37,6 +40,7 @@ func Register(c *fiber.Ctx) error {
 		Email:     data["email"],
 		FirstName: data["first_name"],
 		LastName:  data["last_name"],
+		ImagePath: "https://web.ayomenjadi.com/images/noimage.png",
 		Type:      typeUser,
 		Hp:        data["hp"],
 		CreatedAt: time.Now(),
@@ -87,7 +91,7 @@ func Login(c *fiber.Ctx) error {
 		"token":      t,
 		"username":   user.Username,
 		"email":      user.Email,
-		"image":      user.Image,
+		"image":      user.ImagePath,
 		"desc":       user.Desc,
 		"hp":         user.Hp,
 		"first_name": user.FirstName,
@@ -118,52 +122,94 @@ func Update(c *fiber.Ctx) error {
 	return jsonResponse(c, fiber.StatusOK, "User updated successfully", user)
 }
 
-func UploadImage(c *fiber.Ctx) error {
-	// Ambil username dari query atau body
-	username := c.FormValue("username")
-	if username == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Username is required",
-		})
-	}
+func UploadUserImage(c *fiber.Ctx) error {
+	username := c.Params("username")
 
-	// Ambil file gambar
-	file, err := c.FormFile("image")
+	// Retrieve the file from the form
+	file, err := c.FormFile("image_path")
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Failed to upload image",
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Unable to read the file",
 		})
 	}
 
-	// Simpan file ke folder "uploads"
-	uploadPath := fmt.Sprintf("var/www/html/images/%s", file.Filename)
-	if err := c.SaveFile(file, uploadPath); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to save image",
-		})
-	}
+	fmt.Println("File received:", file.Filename, "Size:", file.Size)
 
-	// Cari user di database
+	// Validate user exists
 	var user models.User
 	if err := models.DB.First(&user, "username = ?", username).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "User not found",
+		if err == gorm.ErrRecordNotFound {
+			return c.Status(http.StatusNotFound).JSON(fiber.Map{
+				"error": "User not found",
+			})
+		}
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Database error",
 		})
 	}
 
-	// Update kolom image di database
-	user.Image = uploadPath
+	// Save the file to the specified directory
+	uploadDir := "/var/www/html/images" // Local directory mapped to Docker container
+	fmt.Println("Saving file to directory:", uploadDir)
+
+	// Ensure the directory exists
+	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+		err := os.MkdirAll(uploadDir, 0755)
+		if err != nil {
+			fmt.Println("Error creating directory:", err)
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Unable to create directory",
+			})
+		}
+	}
+
+	ext := filepath.Ext(file.Filename)
+	fileName := fmt.Sprintf("%s%s", username, ext)
+	filePath := filepath.Join(uploadDir, fileName)
+	fmt.Println("Saving file to:", filePath)
+
+	fileContent, err := file.Open()
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Unable to open the file",
+		})
+	}
+	defer fileContent.Close()
+
+	outFile, err := os.Create(filePath)
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Unable to create the file on the server",
+		})
+	}
+	defer outFile.Close()
+
+	_, err = io.Copy(outFile, fileContent)
+	if err != nil {
+		fmt.Println("Error saving file content:", err)
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Unable to save the file content",
+		})
+	}
+
+	// Construct the public URL for the image
+	publicURL := fmt.Sprintf("https://web.ayomenjadi.com/images/%s", fileName)
+
+	// Update user information in the database
+	user.ImagePath = publicURL
+	user.UpdatedAt = time.Now()
 	if err := models.DB.Save(&user).Error; err != nil {
-		// Hapus file jika database gagal update
-		os.Remove(uploadPath)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to update user image",
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Unable to update user information",
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Image uploaded successfully",
-		"user":    user,
+	// Return success response with image URL
+	return c.Status(http.StatusOK).JSON(fiber.Map{
+		"message":    "Image uploaded successfully",
+		"image_path": publicURL,
 	})
 }
 
