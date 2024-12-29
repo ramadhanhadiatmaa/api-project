@@ -3,6 +3,7 @@ package controllers
 import (
 	"auth/models"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -131,6 +132,8 @@ func UploadUserImage(c *fiber.Ctx) error {
 		})
 	}
 
+	fmt.Println("File received:", file.Filename, "Size:", file.Size)
+
 	// Validate user exists
 	var user models.User
 	if err := models.DB.First(&user, "username = ?", username).Error; err != nil {
@@ -146,26 +149,51 @@ func UploadUserImage(c *fiber.Ctx) error {
 
 	// Save the file to the specified directory
 	uploadDir := "/var/www/html/images"
+	fmt.Println("Saving file to directory:", uploadDir)
+
 	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
-		os.MkdirAll(uploadDir, 0755)
+		err := os.MkdirAll(uploadDir, 0755)
+		if err != nil {
+			fmt.Println("Error creating directory:", err)
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Unable to create directory",
+			})
+		}
 	}
 
-	// Save the file with the username as the filename
 	ext := filepath.Ext(file.Filename)
 	fileName := fmt.Sprintf("%s%s", username, ext)
 	filePath := filepath.Join(uploadDir, fileName)
-	fmt.Println("Saving file to:", filePath) // Debug log
-	if err := c.SaveFile(file, filePath); err != nil {
-		fmt.Println("Error saving file:", err) // Debug log
+	fmt.Println("Saving file to:", filePath)
+
+	fileContent, err := file.Open()
+	if err != nil {
+		fmt.Println("Error opening file:", err)
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Unable to save the file",
+			"error": "Unable to open the file",
+		})
+	}
+	defer fileContent.Close()
+
+	outFile, err := os.Create(filePath)
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Unable to create the file on the server",
+		})
+	}
+	defer outFile.Close()
+
+	_, err = io.Copy(outFile, fileContent)
+	if err != nil {
+		fmt.Println("Error saving file content:", err)
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Unable to save the file content",
 		})
 	}
 
-	// Generate the public URL
-	publicURL := fmt.Sprintf("https://116.193.191.231/images/%s", fileName)
+	publicURL := fmt.Sprintf("http://116.193.191.231/images/%s", fileName)
 
-	// Update the user record with the image path
 	user.ImagePath = publicURL
 	user.UpdatedAt = time.Now()
 	if err := models.DB.Save(&user).Error; err != nil {
