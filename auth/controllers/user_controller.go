@@ -148,7 +148,7 @@ func UploadUserImage(c *fiber.Ctx) error {
 	}
 
 	// Save the file to the specified directory
-	uploadDir := "./images" // Local directory mapped to Docker container
+	uploadDir := "/var/www/html/images" // Local directory mapped to Docker container
 	fmt.Println("Saving file to directory:", uploadDir)
 
 	// Ensure the directory exists
