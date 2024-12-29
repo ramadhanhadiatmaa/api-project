@@ -145,7 +145,7 @@ func UploadUserImage(c *fiber.Ctx) error {
 	}
 
 	// Save the file to the specified directory
-	uploadDir := "/var/www/http/images"
+	uploadDir := "/var/www/html/images"
 	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 		os.MkdirAll(uploadDir, 0755)
 	}
@@ -154,14 +154,16 @@ func UploadUserImage(c *fiber.Ctx) error {
 	ext := filepath.Ext(file.Filename)
 	fileName := fmt.Sprintf("%s%s", username, ext)
 	filePath := filepath.Join(uploadDir, fileName)
+	fmt.Println("Saving file to:", filePath) // Debug log
 	if err := c.SaveFile(file, filePath); err != nil {
+		fmt.Println("Error saving file:", err) // Debug log
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Unable to save the file",
 		})
 	}
 
 	// Generate the public URL
-	publicURL := fmt.Sprintf("116.193.191.231/images/%s", fileName)
+	publicURL := fmt.Sprintf("https://116.193.191.231/images/%s", fileName)
 
 	// Update the user record with the image path
 	user.ImagePath = publicURL
@@ -173,7 +175,7 @@ func UploadUserImage(c *fiber.Ctx) error {
 	}
 
 	return c.Status(http.StatusOK).JSON(fiber.Map{
-		"message": "Image uploaded successfully",
+		"message":    "Image uploaded successfully",
 		"image_path": publicURL,
 	})
 }
