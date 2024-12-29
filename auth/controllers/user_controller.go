@@ -147,11 +147,10 @@ func UploadUserImage(c *fiber.Ctx) error {
 		})
 	}
 
-	// Define the public directory for image uploads
-	uploadDir := "./public/images"
+	// Save the file to the specified directory
+	uploadDir := "/var/www/html/images"
 	fmt.Println("Saving file to directory:", uploadDir)
 
-	// Check if the directory exists, create if not
 	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 		err := os.MkdirAll(uploadDir, 0755)
 		if err != nil {
@@ -162,13 +161,11 @@ func UploadUserImage(c *fiber.Ctx) error {
 		}
 	}
 
-	// Define the file path for the uploaded file
 	ext := filepath.Ext(file.Filename)
 	fileName := fmt.Sprintf("%s%s", username, ext)
 	filePath := filepath.Join(uploadDir, fileName)
 	fmt.Println("Saving file to:", filePath)
 
-	// Open the file and save its content to the specified path
 	fileContent, err := file.Open()
 	if err != nil {
 		fmt.Println("Error opening file:", err)
@@ -195,10 +192,8 @@ func UploadUserImage(c *fiber.Ctx) error {
 		})
 	}
 
-	// Generate the public URL for the uploaded image
 	publicURL := fmt.Sprintf("http://116.193.191.231/images/%s", fileName)
 
-	// Update the user's record with the image path
 	user.ImagePath = publicURL
 	user.UpdatedAt = time.Now()
 	if err := models.DB.Save(&user).Error; err != nil {
@@ -206,8 +201,6 @@ func UploadUserImage(c *fiber.Ctx) error {
 			"error": "Unable to update user information",
 		})
 	}
-
-	fmt.Println("File uploaded successfully:", publicURL)
 
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"message":    "Image uploaded successfully",
