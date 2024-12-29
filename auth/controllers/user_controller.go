@@ -125,7 +125,7 @@ func UploadUserImage(c *fiber.Ctx) error {
 	username := c.Params("username")
 
 	// Retrieve the file from the form
-	file, err := c.FormFile("image")
+	file, err := c.FormFile("image_path")
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"error": "Unable to read the file",
@@ -148,9 +148,10 @@ func UploadUserImage(c *fiber.Ctx) error {
 	}
 
 	// Save the file to the specified directory
-	uploadDir := "/var/www/html/images"
+	uploadDir := "./images" // Local directory mapped to Docker container
 	fmt.Println("Saving file to directory:", uploadDir)
 
+	// Ensure the directory exists
 	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 		err := os.MkdirAll(uploadDir, 0755)
 		if err != nil {
@@ -192,8 +193,10 @@ func UploadUserImage(c *fiber.Ctx) error {
 		})
 	}
 
+	// Construct the public URL for the image
 	publicURL := fmt.Sprintf("http://116.193.191.231/images/%s", fileName)
 
+	// Update user information in the database
 	user.ImagePath = publicURL
 	user.UpdatedAt = time.Now()
 	if err := models.DB.Save(&user).Error; err != nil {
@@ -202,6 +205,7 @@ func UploadUserImage(c *fiber.Ctx) error {
 		})
 	}
 
+	// Return success response with image URL
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"message":    "Image uploaded successfully",
 		"image_path": publicURL,
