@@ -40,7 +40,7 @@ func Register(c *fiber.Ctx) error {
 		Email:     data["email"],
 		FirstName: data["first_name"],
 		LastName:  data["last_name"],
-		ImagePath: "http://116.193.191.231/images/noimage.png",
+		ImagePath: "https://web.ayomenjadi.com/images/noimage.png",
 		Type:      typeUser,
 		Hp:        data["hp"],
 		CreatedAt: time.Now(),
@@ -195,7 +195,7 @@ func UploadUserImage(c *fiber.Ctx) error {
 	}
 
 	// Construct the public URL for the image
-	publicURL := fmt.Sprintf("http://116.193.191.231/images/%s", fileName)
+	publicURL := fmt.Sprintf("https://web.ayomenjadi.com/images/%s", fileName)
 
 	// Update user information in the database
 	user.ImagePath = publicURL
